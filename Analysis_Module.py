@@ -119,7 +119,7 @@ def Processing(img,title,positions):
     cut_x,cut_y = list(map(math.floor,points))
     img_cut = ro[cut_y-5:cut_y+5,cut_x - 50:cut_x +50,:]
     scroll_through(img_cut)
-    # kinograph = np.array([abs(np.min_scalar_type(i,axis = 0)) for i in img_cut])
+    kinograph = np.array([abs(np.min_scalar_type(i,axis = 0)) for i in img_cut])
     # kinograph = clean_up_kinograph(kinograph)
     # plt.imshow(kinograph,cmap = 'gray',filternorm= True)
     return 0
