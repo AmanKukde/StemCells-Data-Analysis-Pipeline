@@ -18,6 +18,7 @@ from numpy import ones,vstack
 from numpy.linalg import lstsq
 from tqdm import tqdm 
 import math
+from scipy import ndimage
 sns.set_style("white")
 
 
@@ -69,7 +70,7 @@ def find_xy_pair(img,m,x,c):
                 else:
                     y = math.floor(m*xi+c)
                     if y>=1200 or y<0:
-                        pass
+                        pair_x.append(0)
                     else:
                         pair_x.append(im[xi,y])
             pair_c.append(pair_x)
@@ -85,13 +86,19 @@ def unpack_pos(axes_points):
 def slope(positions):
     
     axes_points = positions['axis']
-    cut_points = positions['cut'] 
+    cut_points = positions['cut']
     x_coords,y_coords = unpack_pos(axes_points)
-    theta = (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0]) 
-    intercept = cut_points[0][1] - int(theta*cut_points[0][0])
-    return theta,intercept
+    slope  = find_slope(x_coords,y_coords)
+    theta_deg = math.degrees(math.atan(slope))
+    intercept = cut_points[0][1] - int(slope*cut_points[0][0])
+    return theta_deg,intercept
 
-
+def find_slope(x_coords,y_coords):
+    if x_coords[0]>x_coords[1]:
+        slope = (y_coords[0] - y_coords[1])/(x_coords[0] - x_coords[1]) 
+    else:
+        slope =  (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0]) 
+    return slope
 def scroll_through(img):
     fig, ax = plt.subplots(1, 1)
     fig.tight_layout()
@@ -114,11 +121,6 @@ def Processing(img,positions):
     kinograph = clean_up_kinograph(kinograph)
     plt.imshow(kinograph,cmap = 'gray',filternorm= True)
     return 0
-
-
-
-
-
 
 
 def get_desired_cut_positions(file,path):
@@ -145,13 +147,14 @@ def input_taker():
                 exit()
     return not user_input
 
-# path = "/Users/aman/Desktop/pasteur/data/"
+path = "/Users/aman/Desktop/pasteur/data/"
 def start_processing():
-    path = "/Users/akukde/Desktop/pasteur/edge_data/"
+    # path = "/Users/akukde/Desktop/pasteur/edge_data/"
+    path = "/Users/akukde/Desktop/pasteur/data/"
     files = os.listdir(path)
     files.sort()
-    for file in files:
-    # for file in files[4:]:
+    # for file in files:
+    for file in files[4:]:
         user_input = True
         while user_input:
             get_desired_cut_positions(file,path)
