@@ -19,6 +19,12 @@ from numpy.linalg import lstsq
 from tqdm import tqdm 
 import math
 from scipy import ndimage
+<<<<<<< HEAD
+=======
+from skimage.filters import threshold_yen
+from skimage.exposure import rescale_intensity
+import gc
+>>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 sns.set_style("white")
 
 
@@ -62,11 +68,11 @@ def find_xy_pair(img,m,x,c):
     for i in tqdm(range(img.shape[-1])):
         im = img[:,:,i]
         pair_c =[]
-        for c in (range(d-500,d+500)):
+        for c in (range(d-50,d+50)):
             pair_x = []
             for xi in range(x-50,x+50):
                 if xi>=1200 or xi<0:
-                    pass
+                    pair_x.append(0)
                 else:
                     y = math.floor(m*xi+c)
                     if y>=1200 or y<0:
@@ -84,8 +90,8 @@ def unpack_pos(axes_points):
     return x_coords,y_coords
 
 def slope(positions):
-    
     axes_points = positions['axis']
+<<<<<<< HEAD
     cut_points = positions['cut']
     x_coords,y_coords = unpack_pos(axes_points)
     slope  = find_slope(x_coords,y_coords)
@@ -99,6 +105,15 @@ def find_slope(x_coords,y_coords):
     else:
         slope =  (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0]) 
     return slope
+=======
+    x_coords,y_coords = unpack_pos(axes_points)
+    theta = (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0])
+    theta = math.degrees(math.atan(theta))
+   
+    return theta
+
+
+>>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 def scroll_through(img):
     fig, ax = plt.subplots(1, 1)
     fig.tight_layout()
@@ -113,30 +128,47 @@ def clean_up_kinograph(kinograph):
             new.append(kinograph[i])
     return new
 
-def Processing(img,positions):
-    m,c = slope(positions)
-    img_cut = find_xy_pair(img,m,int(m*int(positions['cut'][0][0])),c)
-
+def Processing(img,title,positions):
+    m = slope(positions)
+    ro = ndimage.rotate(img,m,mode= "nearest")
+    del img
+    gc.collect()
+    klicker_2 = initialise_clicker(ro,title = f"Rotated {title}",classes = ["cut point"])
+    points = klicker_2.get_positions()['cut point'][0]
+    cut_x,cut_y = list(map(math.floor,points))
+    img_cut = ro[cut_y-5:cut_y+5,cut_x - 50:cut_x +50,:]
+    scroll_through(img_cut)
     kinograph = np.array([abs(np.min_scalar_type(i,axis = 0)) for i in img_cut])
-    kinograph = clean_up_kinograph(kinograph)
-    plt.imshow(kinograph,cmap = 'gray',filternorm= True)
+    # kinograph = clean_up_kinograph(kinograph)
+    # plt.imshow(kinograph,cmap = 'gray',filternorm= True)
     return 0
 
 
+<<<<<<< HEAD
+=======
+def new_point_after_rot(m,positions):
+    cut_points = positions['cut'][0] 
+    x,y = cut_points
+    x1 = (x - y*m)*(math.cos(m))
+    y1 = (y + x*m)*(math.cos(m))
+    return np.array([x1,y1])
+
+
+>>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 def get_desired_cut_positions(file,path):
     print(file)
     img = tff.imread(path + file)
     img = img.T
     #SLICES VIEWER
+    klicker  = initialise_clicker(img,title = str(file),classes=["axis"],markers = ["x"], colors = ['r'])
+    Processing(img,str(file),klicker.get_positions())
+
+def initialise_clicker(img,title,classes = ["Dummy"],markers = ["."],colors = ['Yellow']):
     fig, ax = plt.subplots(1, 1)
     fig.tight_layout()
-    fig.canvas.set_window_title(file)
-
-    klicker = clicker(ax = ax,classes=["cut","axis"],markers = ["x","."],colors = ["red",'yellow'],X = img)
-    
-    Processing(img,klicker.get_positions())
-
-
+    fig.canvas.set_window_title(title)
+    klicker = clicker(ax = ax,classes=classes,markers = markers ,colors = colors,X = img)
+    return klicker
 
 def input_taker():
     root = tk.Tk()
@@ -148,9 +180,14 @@ def input_taker():
     return not user_input
 
 path = "/Users/aman/Desktop/pasteur/data/"
+<<<<<<< HEAD
 def start_processing():
     # path = "/Users/akukde/Desktop/pasteur/edge_data/"
     path = "/Users/akukde/Desktop/pasteur/data/"
+=======
+# path = "/Users/aman/Desktop/pasteur/test/"
+def start_processing():
+>>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
     files = os.listdir(path)
     files.sort()
     # for file in files:
