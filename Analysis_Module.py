@@ -1,5 +1,6 @@
 
 from multiprocessing import Process
+from sympy import interpolate
 import tifffile as tff
 import cv2
 from matplotlib import pyplot as plt
@@ -19,12 +20,9 @@ from numpy.linalg import lstsq
 from tqdm import tqdm 
 import math
 from scipy import ndimage
-<<<<<<< HEAD
-=======
 from skimage.filters import threshold_yen
 from skimage.exposure import rescale_intensity
 import gc
->>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 sns.set_style("white")
 
 
@@ -34,7 +32,7 @@ class IndexTracker(object):
         self.points = {}
         self.coords = []
         self.ax = ax
-        plt.subplots_adjust(left = 0,bottom = 0.15,right = 0.845,top = 0.9)
+        plt.subplots_adjust(left = 0.15,bottom = 0.15,right = 0.95,top = 0.9)
         ax.set_title('use scroll wheel to navigate images')
 
         self.X = X
@@ -51,7 +49,7 @@ class IndexTracker(object):
         print("%s %s" % (event.button, event.step))
         if event.button == 'up':
             self.ind = (self.ind + 1) % self.slices
-        else:
+        elif event.button == 'down':
             self.ind = (self.ind - 1) % self.slices
         self.update()
 
@@ -91,21 +89,6 @@ def unpack_pos(axes_points):
 
 def slope(positions):
     axes_points = positions['axis']
-<<<<<<< HEAD
-    cut_points = positions['cut']
-    x_coords,y_coords = unpack_pos(axes_points)
-    slope  = find_slope(x_coords,y_coords)
-    theta_deg = math.degrees(math.atan(slope))
-    intercept = cut_points[0][1] - int(slope*cut_points[0][0])
-    return theta_deg,intercept
-
-def find_slope(x_coords,y_coords):
-    if x_coords[0]>x_coords[1]:
-        slope = (y_coords[0] - y_coords[1])/(x_coords[0] - x_coords[1]) 
-    else:
-        slope =  (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0]) 
-    return slope
-=======
     x_coords,y_coords = unpack_pos(axes_points)
     theta = (y_coords[1] - y_coords[0])/(x_coords[1] - x_coords[0])
     theta = math.degrees(math.atan(theta))
@@ -113,7 +96,6 @@ def find_slope(x_coords,y_coords):
     return theta
 
 
->>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 def scroll_through(img):
     fig, ax = plt.subplots(1, 1)
     fig.tight_layout()
@@ -136,16 +118,17 @@ def Processing(img,title,positions):
     klicker_2 = initialise_clicker(ro,title = f"Rotated {title}",classes = ["cut point"])
     points = klicker_2.get_positions()['cut point'][0]
     cut_x,cut_y = list(map(math.floor,points))
-    img_cut = ro[cut_y-5:cut_y+5,cut_x - 50:cut_x +50,:]
-    scroll_through(img_cut)
-    kinograph = np.array([abs(np.min_scalar_type(i,axis = 0)) for i in img_cut])
+    img_cut = ro[cut_y-5:cut_y+5,cut_x - 150:cut_x +150,:]
+    r_i = np.array([cv2.resize(img_cut[:,:,i],(1,300), interpolation= cv2.INTER_LANCZOS4) for i in range(img_cut.shape[-1])])
+    ri = np.hstack(r_i)
+    print(ri.shape)
+    plt.figure();
+    plt.imshow(ri.T,cmap = 'gray');plt.plot()
     # kinograph = clean_up_kinograph(kinograph)
     # plt.imshow(kinograph,cmap = 'gray',filternorm= True)
     return 0
 
 
-<<<<<<< HEAD
-=======
 def new_point_after_rot(m,positions):
     cut_points = positions['cut'][0] 
     x,y = cut_points
@@ -154,7 +137,6 @@ def new_point_after_rot(m,positions):
     return np.array([x1,y1])
 
 
->>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
 def get_desired_cut_positions(file,path):
     print(file)
     img = tff.imread(path + file)
@@ -180,14 +162,8 @@ def input_taker():
     return not user_input
 
 path = "/Users/aman/Desktop/pasteur/data/"
-<<<<<<< HEAD
-def start_processing():
-    # path = "/Users/akukde/Desktop/pasteur/edge_data/"
-    path = "/Users/akukde/Desktop/pasteur/data/"
-=======
 # path = "/Users/aman/Desktop/pasteur/test/"
 def start_processing():
->>>>>>> 091ce54449e0a6ffb2c8cdfbe8f6d02a4240fb99
     files = os.listdir(path)
     files.sort()
     # for file in files:
